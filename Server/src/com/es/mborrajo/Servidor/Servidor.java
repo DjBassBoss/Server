@@ -50,7 +50,7 @@ public class Servidor {
 		
 		serverSocket = null;
 		
-		appendText("Starting Server.");
+		appendText("Starting Server...");
 		
 		while(true){
 			try {
