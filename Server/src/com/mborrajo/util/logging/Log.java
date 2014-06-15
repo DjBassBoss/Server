@@ -20,9 +20,11 @@ public class Log extends Object{
 		this.time = Instant.now();
 		this.logType = logType;
 	}
+	
 	public Log(Level level,String msg,Exception e){
 		this(level,msg,e,LogType.EXCEPTION);
 	}
+	
 	public Log(Level level,String msg){
 		 this(level,msg,null,LogType.LEVEL_TIME_MESSAGE);
 	}

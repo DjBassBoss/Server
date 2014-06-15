@@ -1,113 +1,95 @@
 package com.es.mborrajo.Servidor;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
+import com.mborrajo.util.logging.Level;
+import com.mborrajo.util.logging.Log;
+import com.mborrajo.util.logging.Logger;
+import com.mborrajo.util.logging.LoggerManager;
 
 public class Servidor {
-
+	
 	public int port = 6543;
 	
 	private ServerSocket serverSocket = null;
 	private Socket clientSocket = null;
-	private JTextArea text = null;
-	
-	private boolean windowCreated = false;
-	
-	public boolean createLog = true;
-	public String logFile = "log.txt";
+		
+	private Logger logger;
 	
 	public Servidor(int port){
 	
 		this.port = port;		
+		try {
+			logger = LoggerManager.getLogger();
+		} catch (Exception e) {
+			System.err.println(new Log(Level.SEVERE, "Logger Manager Error",e));
+		}
 		
-	}
-	
-	public void createWindow(){
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLocationRelativeTo(null);
-		frame.setSize(300, 400);
-		frame.setTitle("Servidor");
-		text = new JTextArea();
-		text.setEditable(false);
-		
-		frame.add(text);
-		
-		frame.setVisible(true);
-		windowCreated = true;
 	}
 	
 	public boolean run(){
 		
 		serverSocket = null;
 		
-		appendText("Starting Server...");
+		logger.logMessage("Starting Server...");
 		
 		while(true){
 			try {
 			    serverSocket = new ServerSocket(port);
 			} 
 			catch (IOException e) {
-				appendText("Could not listen on port: " + port);
-				appendText(e.getMessage());
+				logger.logMessage(Level.SEVERE,"Could not listen on port: " + port,e);
 			    System.exit(-1);
 			}
-			appendText("Socket opened on port " + port + ".\nWaiting connection...");
+			logger.logMessage("Socket opened on port " + port + ".\nWaiting connection...");
+			
 			try {
 			    clientSocket = serverSocket.accept();
 			    recieveMessage();
 			} 
 			catch (IOException e) {
-			    appendText("Accept failed: 4444");
+				logger.logMessage("Accept failed: 4444");
+				
 			    System.exit(-1);
 			}
 		}
 		
 	}
-	
-	private void appendText(String s){
-		if (windowCreated) text.setText(text.getText() + "\n" + s);
-		System.out.println(s);
-	}
-	
+
 	private void recieveMessage(){
 
-		BufferedReader in = null;
-		PrintWriter out = null;
+		
 		try {
-			out = new PrintWriter(clientSocket.getOutputStream(), true);
+			BufferedReader in = null;
+			//PrintWriter out = null;
+			//out = new PrintWriter(clientSocket.getOutputStream(), true);
 			in = new BufferedReader(new InputStreamReader(
 			        clientSocket.getInputStream()));
 			String line = in.readLine();
-			appendText(line.toString());
-			parseMessage(line.toString());
+			logger.logMessage(line);
+			processMessage(line.toString());
 		} catch (IOException e) {
-			appendText("Failed to open incoming socket.");
+			logger.logMessage(Level.WARNING,"Failed to open incoming socket.",e);
 		    return;
 		}
 		catch (Exception e){
-			appendText("Exception: " + e.getMessage());
+			logger.logMessage(Level.WARNING,"Unknown Exception while receiving the message. ",e);
 		    return;
 		}
 		try {
 			serverSocket.close();
 		} catch (IOException e) {
-			appendText(e.getMessage());
-			appendText(e.getStackTrace().toString());
+			logger.logMessage(Level.WARNING, "Error while closing the socket." , e);
 			return;
 		}
 	}
 	
-	private void parseMessage(String s){
+	private void processMessage(String s){
 		
 		String[] tokens = s.split(" ");
 		for(int i = 0; i < tokens.length; i++){
@@ -117,16 +99,7 @@ public class Servidor {
 		}
 		if (tokens[0] != null && tokens[0].contains("GET")){
 			PageServer ps = new PageServer();
-			try {
-				sendMessage(ps.getPage(tokens[1].substring(1)));
-			}
-			catch (FileNotFoundException e){
-				sendMessage("File not found on server");
-			}
-			catch (IOException e) {
-				appendText(e.getMessage());
-				return;
-			}
+			sendMessage(ps.getPage(tokens[1].substring(1)));
 		}
 	}
 	
@@ -142,7 +115,7 @@ public class Servidor {
                                         sendSocket.getInputStream()));
         }
         catch (IOException e) {
-        	appendText(e.getMessage());
+        	logger.logMessage(Level.WARNING, "Error while sending message.", e);
             return;
         }
 		out.println("HTTP/1.1 200 OK");
@@ -152,7 +125,7 @@ public class Servidor {
 			in.close();
 			sendSocket.close();
 		}catch(Exception e){
-			appendText(e.getMessage());
+			logger.logMessage(Level.WARNING, "Error while closing sockets after sending the message.", e);
 			return;
 		}
 	}

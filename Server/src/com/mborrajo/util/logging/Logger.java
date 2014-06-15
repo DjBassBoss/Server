@@ -34,6 +34,20 @@ public class Logger {
 		}
 		return true;
 	}
+	
+	public boolean logMessage(String message){
+		return logMessage(new Log(message));
+	}
+	
+	public boolean logMessage(Level level , String message){
+		return logMessage(new Log(level,message));
+	}
+	
+	public boolean logMessage(Level level , String message , Exception e){
+		return logMessage(new Log(level,message,e));
+	}
+	
+	
 	private void write(Object s) throws IOException{
 		FileWriter fw = new FileWriter(new File(filename) , true);
 		fw.write(s.toString());
