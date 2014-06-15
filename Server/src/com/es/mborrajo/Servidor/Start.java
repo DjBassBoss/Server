@@ -18,7 +18,7 @@ public class Start {
 		// Setup Event Logging
 		
 		StringWriter sw = new StringWriter();
-		sw.write("C:/Logs/Log-");
+		sw.write("Log-");
 		sw.write(java.time.LocalDate.now().toString());
 		
 		LoggerManager.setFilename(sw.toString());
@@ -39,11 +39,7 @@ public class Start {
 		//Setup server
 		
 		Servidor server = new Servidor(6543);
-		if (args.length == 1 && args[0].equals("-nogui"))
-			server.run();
-		else{
-			server.run();
-		}
+		server.run();
 		System.exit(0);
 	}
 
